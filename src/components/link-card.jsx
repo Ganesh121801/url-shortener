@@ -7,23 +7,29 @@ import {deleteUrl} from "@/db/apiUrls";
 import {BeatLoader} from "react-spinners";
 
 const LinkCard = ({url = [], fetchUrls}) => {
-  const downloadImage = () => {
+ const downloadImage = () => {
     const imageUrl = url?.qr;
-    const fileName = url?.title; // Desired file name for the downloaded image
-
-    // Create an anchor element
+    const fileName = url?.title || "QR_Code"; // Default name if no title is provided
+  
+    // Create a link element
     const anchor = document.createElement("a");
     anchor.href = imageUrl;
-    anchor.download = fileName;
-
-    // Append the anchor to the body
-    document.body.appendChild(anchor);
-
-    // Trigger the download by simulating a click event
-    anchor.click();
-
-    // Remove the anchor from the document
-    document.body.removeChild(anchor);
+    anchor.download = fileName; // Set the download attribute with the desired file name
+  
+    // Fetch the image as a blob (binary data) and then download it
+    fetch(imageUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const urlObject = URL.createObjectURL(blob);
+        anchor.href = urlObject;
+  
+        // Trigger the download
+        anchor.click();
+  
+        // Clean up after download
+        URL.revokeObjectURL(urlObject);
+      })
+      .catch(err => console.error("Download failed", err));
   };
 
   const {loading: loadingDelete, fn: fnDelete} = useFetch(deleteUrl, url.id);
